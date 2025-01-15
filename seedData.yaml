@@ -1,0 +1,52 @@
+- id: 1
+  language: Python
+  code: "print('Hello, World!')"
+- id: 2
+  language: Python
+  code: |
+    def add(a, b):
+        return a + b
+- id: 3
+  language: Python
+  code: |
+    class Circle:
+        def __init__(self, radius):
+            self.radius = radius
+
+        def area(self):
+            return 3.14 * self.radius ** 2
+- id: 4
+  language: JavaScript
+  code: "console.log('Hello, World!');"
+- id: 5
+  language: JavaScript
+  code: |
+    function multiply(a, b) {
+        return a * b;
+    }
+- id: 6
+  language: JavaScript
+  code: 'const square = num => num * num;'
+- id: 7
+  language: Java
+  code: |
+    public class HelloWorld {
+        public static void main(String[] args) {
+            System.out.println(\"Hello, World!\");
+        }
+    }
+- id: 8
+  language: Java
+  code: |
+    public class Rectangle {
+        private int width;
+        private int height;
+
+        public Rectangle(int width, int height) {
+            this.width = width;
+            this.height = height;
+        }
+
+        public int getArea() {
+            return width * height;
+        }
