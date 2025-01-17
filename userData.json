@@ -1,0 +1,18 @@
+[
+  {
+    "email": "email",
+    "password": "password"
+  },
+  {
+    "email": "email2",
+    "password": "password2"
+  },
+  {
+    "email": "email3",
+    "password": "password3"
+  },
+  {
+    "email": "email4",
+    "password": "$2b$10$lV9Ei/TBjAZNfv3gmrqMqeKioSsXagnzudaxstKE76z.7xY./AkBa"
+  }
+]

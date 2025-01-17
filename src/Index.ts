@@ -6,17 +6,17 @@
 import express, { Request, Response } from 'express';
 import fs from 'fs';
 import crypto from 'crypto';
+import bcrypt from 'bcrypt';
 
 const app = express();
 const PORT = 3000;
+const seedDataFilePath = './seedData.json';
 
-let snippets: any[] = [];
 
-// Encryption Configuration - Use fixed key and IV for simplicity
-const ENCRYPTION_KEY = crypto.scryptSync('my-secret-password', 'salt', 32); // Derive key from password
-const IV = Buffer.alloc(16, 0); // Use a fixed IV (this can be improved, e.g., by storing IV with data)
+const ENCRYPTION_KEY = crypto.scryptSync('my-secret-password', 'salt', 32);
+const IV = Buffer.alloc(16, 0); 
 
-// Encryption and Decryption Functions
+
 function encrypt(text: string) {
   if (!text) {
     throw new Error('Cannot encrypt: Text is undefined or empty');
@@ -37,23 +37,29 @@ function decrypt(text: string) {
   return decrypted;
 }
 
-fs.readFile('./seedData.json', 'utf8', (err, data) => {
-    const seedData = JSON.parse(data);
-    seedData.forEach((item: any) => {
-      if (item.code) {
-        // Encrypt the 'code' field instead of 'content'
-        item.code = encrypt(item.code);
-      } else {
-        console.warn('Skipping item with missing code field:', item);
-      }
-    });
-    snippets.push(...seedData);
-});
+const readSnippetsFromFile = (): any[] => {
+  const data = fs.readFileSync(seedDataFilePath, 'utf8');
+  return JSON.parse(data);
+
+};
+
+const saveSnippetToFile = (snippet: any) => {
+  const snippets = readSnippetsFromFile();
+  snippets.push(snippet);
+  fs.writeFileSync(seedDataFilePath, JSON.stringify(snippets, null, 2), 'utf8');
+};
+
+// const saveToFile = (data: any[], filePath: string) => {
+//   fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf8', (err) => {
+//       console.log('Data successfully saved to file!');
+//   });
+// };
 
 app.use(express.json());
 
 
 app.get('/snippets', (req: Request, res: Response) => {
+  const snippets = readSnippetsFromFile();
   const decryptedSnippets = snippets.map((snippet) => ({
     ...snippet,
     code: decrypt(snippet.code),
@@ -61,22 +67,69 @@ app.get('/snippets', (req: Request, res: Response) => {
   res.json(decryptedSnippets);
 });
 
+app.get('/snippet', (req: Request, res: Response) => {
+  const snippets = readSnippetsFromFile();
+  res.json(snippets);
+});
 
 app.get('/snippets/:id', (req: Request, res: Response) => {
   const id = parseInt(req.params.id, 10);
+  const snippets = readSnippetsFromFile();
   const snippet = snippets.find((snippet) => snippet.id === id);
-    snippet.code = decrypt(snippet.code);  
-    res.json(snippet);
+  snippet.code = decrypt(snippet.code);
+  res.json(snippet);
 });
 
 
-app.post('/snippets', (req: Request, res: Response): void => {
-  const newSnippet = req.body;
-  newSnippet.id = snippets.length ? snippets[snippets.length - 1].id + 1 : 1;
-  newSnippet.code = encrypt(newSnippet.code);
-  snippets.push(newSnippet);
-  res.status(201).json(newSnippet);
 
+app.post('/snippets', (req: Request, res: Response): void => {
+  const { language, code } = req.body;
+
+  const snippets = readSnippetsFromFile();
+  const newSnippet = {
+    id: snippets.length ? snippets[snippets.length - 1].id + 1 : 1,
+    language,
+    code: encrypt(code),
+  };
+
+  saveSnippetToFile(newSnippet);
+  res.status(201).json(newSnippet)
+});
+
+//User 
+
+const userDataFilePath = './userData.json';
+
+const readUserFromFile = (): any[] => {
+  const data = fs.readFileSync(userDataFilePath, 'utf8');
+  return JSON.parse(data);
+};
+
+const saveUserToFile = (user: any) => {
+  const users = readUserFromFile();
+  users.push(user);
+  fs.writeFileSync(userDataFilePath, JSON.stringify(users, null, 2), 'utf8');
+};
+
+app.get('/users', (req: Request, res: Response) => {
+  const users = readUserFromFile();
+  res.json(users);
+});
+
+app.post('/users', async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+
+  const saltRounds = 10;
+  const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+
+  const newUser = {
+    email: email,
+    password: hashedPassword,
+  };
+
+  saveUserToFile(newUser);
+  res.status(201).json(newUser)
 });
 
 
